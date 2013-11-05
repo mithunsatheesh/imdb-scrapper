@@ -1,0 +1,36 @@
+html
+	head
+		meta(charset='UTF-8')
+		title	Imdb scrapper dashboard
+		link(rel='stylesheet',href='./css/style.css')
+		script(src="http://code.jquery.com/jquery-2.0.2.min.js")
+		script(src="/socket.io/socket.io.js")
+		script
+			var socket = io.connect('http://localhost:'+ #{port});
+			var i = 0;
+			socket.on('movie_feed', function (data) {
+				if(++i == 40) {
+					$("#columns").html("");
+					i = 0;
+				}
+				$("#columns").prepend(makePin(data));
+				
+			});
+			function makePin(data) {
+				
+				var html = "<div class='pin'>";
+				if(data['image'] != undefined) {
+					html += "<img src='"+data['image']+"' />";
+				}
+				html += "<h2>"+data['title']+"</h2>";
+				if(data['description'] != undefined) {
+					html += "<p>"+data['description']+"</p>";
+				}
+				html += "</div>";					
+				return html;			
+								
+			}			
+			
+	body
+		div#wrapper
+			div#columns						
