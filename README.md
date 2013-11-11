@@ -10,6 +10,14 @@ nodejs daemon application which will scrap the imdb movie data and insert into t
 2. Node.js installed
 
 
+### How to use it ?
+
+1. Make sure you have node.js and MongoDB installed.
+2. cd to the application root and do `npm install` which installs the dependencies
+3. do `node app.js` to start the daemon.
+4. take `localhost:3000` to see the scrapped movie data pushed on to dashboard and check your local `mongo` instance for the collected data.
+
+
 ### Features used
 
 1. Mongo Grid FS for storing the images scrapped from imdb.
