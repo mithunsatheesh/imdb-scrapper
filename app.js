@@ -2,6 +2,7 @@ var mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
 var functions = require('./lib/functions');
 var config = require('./config.json');
+var fs = require('fs');
 
 /**
  * pool relates to the parallel http request pool size
@@ -35,45 +36,55 @@ app.get('/', function(req, res){
 MongoClient.connect(config.mongodb, function(err, db) {
 	
 	var collection = db.collection(config.mongocollection);	
+	
+	try {
 		
-	var ProcessHtmlResponse =  function(result) {
-					
-		if(++queue <= pool) {
+		collection.find().sort({"_id": -1}).limit(1).toArray(function(err, results) {
 			
-			functions.GetHtmlData(ProcessHtmlResponse);
+			if(typeof(results[0])!="undefined") {
+				functions.setStarter(results[0]._id);
+			}
 			
-		}
-		
-		var record = functions.ParseHtml(result);
-		
-		/**
-		* feed to dashboard
-		*/		
-		io.sockets.volatile.emit('movie_feed', record);				
-		
-		collection.insert(record, function(err, docs) {
+		});
+			
+		var ProcessHtmlResponse =  function(result) {
+						
+			if(++queue <= pool) {
+				
+				functions.GetHtmlData(ProcessHtmlResponse);
+				
+			}
+			
+			var record = functions.ParseHtml(result);
+			
+			/**
+			* feed to dashboard
+			*/		
+			io.sockets.volatile.emit('movie_feed', record);		
 
 			if(typeof(record.image)!="undefined") {
-			
-				functions.GetImageByUrl(record.image,function(data){
 				
-					var gs = new mongodb.GridStore(db, result.id+".jpg", "w", {
-						"content_type": "image/jpg",
-						"metadata":{
-							"author": "author"
-						},
-						"chunk_size": 1024*4
-					});
+				var tmp = record.image.split(".");
+				record.location = record.title+"."+tmp[tmp.length-1];
 				
-					gs.open(function(err, gs){
-						  gs.write(data, function(){
+				collection.insert(record, function(err, docs) {
+					
+					functions.GetImageByUrl(record.image,function(data){
+					
+						fs.writeFile('./static/'+record.location, data, 'binary', function(err){
 							
-							  --queue;
-							  return functions.GetHtmlData(ProcessHtmlResponse);
-							  
-						  })
+							if (err) {
+								console.log(err);
+							}
+							
+							--queue;
+							return functions.GetHtmlData(ProcessHtmlResponse);
+							
+						});					
+						
+										
 					});
-				
+					
 				});
 				
 			} else {
@@ -82,12 +93,26 @@ MongoClient.connect(config.mongodb, function(err, db) {
 				return functions.GetHtmlData(ProcessHtmlResponse);
 			
 			}
-			
-		});				
-						
-	}
+				
+							
+							
+		}
+		
+		functions.GetHtmlData(ProcessHtmlResponse);
 	
-	functions.GetHtmlData(ProcessHtmlResponse);
+	} catch(e) {
+	
+		collection.find().sort({"_id": -1}).limit(1).toArray(function(err, results) {
+				
+			if(typeof(results[0])!="undefined") {
+				functions.setStarter(results[0]._id);
+			}
+			
+		});
+		functions.GetHtmlData(ProcessHtmlResponse);
+	
+	}
+
 
 });
 
