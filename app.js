@@ -53,8 +53,14 @@ MongoClient.connect(config.mongodb, function(err, db) {
 				
 				functions.GetHtmlData(ProcessHtmlResponse);
 				
-			}
-			
+			} 
+
+			if(result.result == null) {
+				
+				functions.GetHtmlData(ProcessHtmlResponse);
+
+			}						
+	
 			var record = functions.ParseHtml(result);
 			
 			/**
@@ -65,18 +71,17 @@ MongoClient.connect(config.mongodb, function(err, db) {
 			if(typeof(record.image)!="undefined") {
 				
 				var tmp = record.image.split(".");
-				record.location = record.title+"."+tmp[tmp.length-1];
+				record.location = record._id+"."+tmp[tmp.length-1];
 				
 				collection.insert(record, function(err, docs) {
 					
 					functions.GetImageByUrl(record.image,function(data){
-					
+						record.location = record.location.split("?")[0];
 						fs.writeFile('./static/'+record.location, data, 'binary', function(err){
 							
 							if (err) {
 								console.log(err);
 							}
-							
 							--queue;
 							return functions.GetHtmlData(ProcessHtmlResponse);
 							
@@ -88,9 +93,12 @@ MongoClient.connect(config.mongodb, function(err, db) {
 				});
 				
 			} else {
-			
+				
 				--queue;
-				return functions.GetHtmlData(ProcessHtmlResponse);
+				setTimeout( function() {
+					return functions.GetHtmlData(ProcessHtmlResponse);
+				}, 10000 );
+					
 			
 			}
 				

@@ -1,8 +1,8 @@
 {
-	"mongodb" : "mongodb://127.0.0.1:27017/imdb",
-	"mongocollection" : "events",
-	"movieId" : 413468,
+	"mongodb" : "mongodb://127.0.0.1:27017/bmsack",
+	"mongocollection" : "movies",
+	"movieId" : 1,
 	"application_port" : 3000,
-	"req_pool" : 100
+	"req_pool" :1 
 
 }
